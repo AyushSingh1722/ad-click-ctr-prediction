@@ -1,0 +1,7 @@
+{
+  "depth": 2,
+  "n_estimators": 800,
+  "learning_rate": 0.01,
+  "test_auc": 0.6803340561821914,
+  "test_mape": 7.184077054262161
+}

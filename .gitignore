@@ -1,0 +1,21 @@
+# Data files — KDD Cup dataset too large for GitHub
+data/track2/
+data/*.zip
+data/test.zip
+data/KDD_Track2_solution.csv
+
+# KDD raw files loaded directly into notebooks/track2 during EDA
+notebooks/track2/
+# Symlink to data/track2 — broken on remote since data/track2 is excluded
+notebooks/track2
+
+# Keep the small advertising dataset
+!data/sample/ad_click_data.csv
+
+# Virtual environment
+venv-adclick/
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+__pycache__/
+*.pyc

@@ -1,0 +1,6 @@
+{
+  "logistic_regression": 0.972,
+  "decision_tree": 0.944,
+  "xgboost": 0.948,
+  "lightgbm": 0.972
+}

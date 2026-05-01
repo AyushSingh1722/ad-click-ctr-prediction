@@ -1,133 +1,75 @@
-# Ad Click Prediction using Logistic Regression and XGBoost
+# Ad Click CTR Prediction
 
-## Table of Contents
-1. [Business Problem](#business-problem)
-    1. [Problem Description](#problem-description)
-    2. [Source/Useful Links](#sourceuseful-links)
-    3. [Real-world/Business Objectives and Constraints](#real-worldbusiness-objectives-and-constraints)
-2. [Introduction](#introduction)
-3. [Getting Started](#getting-started)
-    1. [Prerequisites](#prerequisites)
-    2. [Installation](#installation)
-4. [Data](#data)
-    1. [Data Description](#data-description)
-    2. [Data Source](#data-source)
-5. [Exploratory Data Analysis (EDA)](#exploratory-data-analysis-eda)
-6. [Data Preprocessing](#data-preprocessing)
-7. [Model Building](#model-building)
-    1. [Logistic Regression](#logistic-regression)
-    2. [XGBoost](#xgboost)
-8. [Model Evaluation](#model-evaluation)
-9. [Conclusion](#conclusion)
+Two datasets, three notebooks, one question: what actually predicts whether someone clicks an ad. I worked through the KDD Cup 2012 Track 2 dataset — five million anonymised search ad impressions — building smoothed historical CTR features and training a gradient-boosted model to AUC 0.6803. A follow-up on a clean 1,000-row advertising dataset found the model hierarchy reversed completely, which is the more interesting result.
 
 ---
 
-## 1. Business Problem <a name="business-problem"></a>
+## Project Structure
 
-### 1.1 Problem Description <a name="problem-description"></a>
-
-**Introduction:**
-
-Clickthrough rate (CTR) is a vital metric used in online advertising to measure the effectiveness of ads. CTR represents the ratio of how often people who view an ad end up clicking on it. It is calculated as the number of clicks divided by the number of impressions. For example, if you have 5 clicks and 100 impressions, your CTR would be 5%.
-
-High CTR indicates that users find your ads relevant and engaging. It also impacts your ad's position and cost in advertising platforms like Google Ads.
-
-In this project, we aim to predict the click-through rate (pCTR) of ads using machine learning models. Accurate pCTR predictions are essential for ranking ads and pricing clicks in online advertising.
-
-**Credits:** [Google AdWords](https://support.google.com/adwords/answer/2615875?hl=en)
-
-### 1.2 Source/Useful Links <a name="sourceuseful-links"></a>
-
-- **Source:** [KDD Cup 2012 - Track 2](https://www.kaggle.com/c/kddcup2012-track2)
-- **Dropbox Links:** [Data Files](https://www.dropbox.com/sh/k84z8y9n387ptjb/AAA8O8IDFsSRhOhaLfXVZcJwa?dl=0)
-- **Blog:** [Hivemall User Guide - KDD Cup 2012 Track 2 Dataset](https://hivemall.incubator.apache.org/userguide/regression/kddcup12tr2_dataset.html)
-
-### 1.3 Real-world/Business Objectives and Constraints <a name="real-worldbusiness-objectives-and-constraints"></a>
-
-**Objective:** Predict the pClick (probability of click) as accurately as possible.
-
-**Constraints:**
-- Low latency: Predictions should be made quickly to respond to user interactions.
-- Interpretability: The model's predictions should be understandable and explainable.
-
----
-
-## 2. Introduction <a name="introduction"></a>
-
-Search advertising is a major revenue source for the internet industry. Accurately predicting the click-through rate (CTR) of ads is crucial for ranking ads and pricing clicks. In this project, we will use machine learning techniques, specifically Logistic Regression and XGBoost, to predict the probability of a user clicking on an ad (pCTR).
-
----
-
-## 3. Getting Started <a name="getting-started"></a>
-
-### 3.1 Prerequisites <a name="prerequisites"></a>
-
-Before running the code, make sure you have the following dependencies installed:
-
-- Python 3.x
-- Jupyter Notebook (for running the provided notebooks)
-- Required libraries (NumPy, Pandas, Scikit-Learn, XGBoost, etc.)
-
-### 3.2 Installation <a name="installation"></a>
-
-You can install the required libraries using `pip`:
-
-```bash
-pip install numpy pandas scikit-learn xgboost
+```
+ad-click-ctr-prediction/
+├── notebooks/
+│   ├── 01_kdd_eda_industrial_scale.ipynb               # EDA on 4.95M merged KDD rows
+│   ├── 02_kdd_feature_engineering_and_modelling.ipynb  # p* feature engineering + XGBoost
+│   └── 03_advertising_eda_and_model_comparison.ipynb   # Four-model comparison on small dataset
+├── data/
+│   ├── track2/                                         # KDD Cup raw files (not in repo — too large)
+│   └── sample/
+│       └── ad_click_data.csv                           # Small advertising dataset (1,000 rows)
+├── models/
+│   ├── xgb_kdd_best_model.joblib                       # Trained KDD XGBoost model
+│   ├── xgb_kdd_best_params.json                        # Grid search best hyperparameters
+│   ├── lgbm_advertising_model.joblib                   # LightGBM model for advertising dataset
+│   ├── xgb_advertising_model.joblib                    # XGBoost model for advertising dataset
+│   └── advertising_model_comparison.json               # Accuracy comparison across four models
+├── docs/                                               # Per-notebook write-ups
+├── requirements.txt
+└── .gitignore
 ```
 
----
-
-## 4. Data <a name="data"></a>
-
-### 4.1 Data Description <a name="data-description"></a>
-
-The dataset contains information about user interactions with ads, including features such as user demographics, ad creative, and more. The target variable is the probability of a click (pClick).
-
-### 4.2 Data Source <a name="data-source"></a>
-
-You can download the dataset from [Kaggle](https://www.kaggle.com/c/kddcup2012-track2) or the provided Dropbox links.
+Per-notebook write-ups are in [`docs/`](docs/), covering approach, findings, and what I would do differently for each notebook.
 
 ---
 
-## 5. Exploratory Data Analysis (EDA) <a name="exploratory-data-analysis-eda"></a>
+## Key Findings
 
-Perform exploratory data analysis to gain insights into the data. Visualize the data distribution, check for missing values, and explore relationships between features and the target variable.
-
----
-
-## 6. Data Preprocessing <a name="data-preprocessing"></a>
-
-Prepare the data for model building. This includes handling missing values, encoding categorical variables, and scaling/normalizing features as necessary.
+- At industrial scale, who the user is and what they searched for matters more than where the ad appears — pUId, pQId, and pTitleId are the three dominant features while gender and age contribute zero model importance despite being available
+- Converting anonymised entity IDs to smoothed historical CTR features is what makes the KDD Cup data learnable; without that step there is nothing to train on
+- On clean, low-dimensional data logistic regression matched the best gradient boosted model exactly — the model hierarchy is a function of the data, not a fixed ranking
 
 ---
 
-## 7. Model Building <a name="model-building"></a>
+## How to Run
 
-### 7.1 Logistic Regression <a name="logistic-regression"></a>
+**Requirements:** Python 3.12, Jupyter, and the packages in `requirements.txt`.
 
-Implement and train a Logistic Regression model to predict pClick.
+```bash
+# Clone the repo
+git clone https://github.com/AyushSingh1722/ad-click-ctr-prediction.git
+cd ad-click-ctr-prediction
 
-### 7.2 XGBoost <a name="xgboost"></a>
+# Create and activate the virtual environment
+python3 -m venv venv-adclick
+source venv-adclick/bin/activate
 
-Implement and train an XGBoost model to predict pClick. Fine-tune hyperparameters for better performance.
+# Install dependencies
+pip install -r requirements.txt
+
+# Register the kernel
+python -m ipykernel install --user --name=adclick-venv --display-name "adclick-venv"
+
+# Launch Jupyter
+jupyter notebook
+```
+
+**KDD Cup data:** The Track 2 files are not in this repository (too large for GitHub). Download them from [Kaggle KDD Cup 2012 Track 2](https://www.kaggle.com/c/kddcup2012-track2) and place them under `data/track2/`. The notebook expects the raw files there and will load them directly.
+
+**Notebook 03** runs entirely on `data/sample/ad_click_data.csv`, which is included in the repo. No additional downloads needed.
+
+Run the notebooks in order: 01 → 02 → 03. Notebook 02 depends on the merged dataframe produced in 01, and 03 is self-contained.
 
 ---
 
-## 8. Model Evaluation <a name="model-evaluation"></a>
+## Acknowledgements
 
-Evaluate the performance of the trained models using appropriate evaluation metrics. Compare the results of Logistic Regression and XGBoost.
-
----
-
-## 9. Conclusion <a name="conclusion"></a>
-
-Summarize the findings and the model's performance. Discuss insights gained from the project and potential future improvements.
-
----
-
-Feel free to explore the code and notebooks in this repository to dive deeper into the project.
-
-**Thank you for your interest in Ad Click Prediction using Logistic Regression and XGBoost!**
-
----
+Some ideas around feature engineering — particularly the smoothed historical CTR approach and the `p*` feature naming convention — were inspired by open-source Kaggle competition work on large-scale CTR prediction problems. The smoothing formulation draws on techniques that became standard practice in the field following competitions like KDD Cup 2012 and related industry work on ad click modelling.
