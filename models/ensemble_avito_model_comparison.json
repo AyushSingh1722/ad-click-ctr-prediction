@@ -1,0 +1,23 @@
+{
+  "baseline_log_loss": 0.039682,
+  "baseline_auc": 0.664,
+  "xgb_raw_log_loss": 0.47832908882498854,
+  "xgb_calibrated_log_loss": 0.03502142091244735,
+  "xgb_auc": 0.75802342254094,
+  "lgb_raw_log_loss": 0.48578814268534776,
+  "lgb_calibrated_log_loss": 0.03423451231894571,
+  "lgb_auc": 0.7506766689271944,
+  "ensemble_log_loss": 0.034039694534938617,
+  "ensemble_auc": 0.7613070419779198,
+  "ensemble_weights": [
+    0.5,
+    0.5
+  ],
+  "calibration_method": "platt_scaling",
+  "ensemble_beats_baseline_ll": true,
+  "ensemble_beats_baseline_auc": true,
+  "train_rows": 1453789,
+  "cal_rows": 484597,
+  "test_rows": 484597,
+  "n_features": 21
+}
