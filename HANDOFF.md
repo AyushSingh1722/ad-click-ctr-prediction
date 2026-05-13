@@ -2,9 +2,9 @@
 
 ## Current Status
 All 8 notebooks complete, executed, audited, and fixed.
-5 Phase 2 READMEs written (docs/04–08).
-Main README.md needs Phase 2 update.
-Final step: update main README, then push everything to GitHub.
+All 8 per-notebook READMEs written (docs/01–08).
+Main README.md complete.
+FastAPI inference service next — create src/api.py and src/feature_engineering.py.
 
 ---
 
@@ -34,6 +34,7 @@ End-to-end ad click CTR prediction across two datasets and two phases.
 
 Phase 1 (COMPLETE): KDD Cup 2012 Track 2 + small advertising dataset
 Phase 2 (COMPLETE): Avito Context Ad Clicks 2015 + inference pipeline
+Phase 3 (IN PROGRESS): FastAPI service + Streamlit demo
 
 Story arc:
 - NB01–02: KDD Cup — built CTR from scratch, learned rate features
@@ -42,12 +43,14 @@ Story arc:
 - NB05: Avito feature engineering — extending KDD approach
 - NB06: Avito modelling — XGBoost, calibration failure discovery
 - NB07: Ensemble — Platt scaling + XGBoost + LightGBM
-- NB08: Inference pipeline — end-to-end scoring demo
+- NB08: Inference pipeline — end-to-end scoring demo (notebook)
+- src/api.py — FastAPI service wrapping the ensemble (next)
+- src/app.py — Streamlit demo (after API)
 
 ---
 
-## Repo Structure
-```
+## Repo Structure (current + planned)
+````
 ad-click-ctr-prediction/
 ├── notebooks/
 │   ├── 01_kdd_eda_industrial_scale.ipynb          ✅
@@ -58,6 +61,11 @@ ad-click-ctr-prediction/
 │   ├── 06_avito_modelling.ipynb                   ✅
 │   ├── 07_avito_ensemble.ipynb                    ✅
 │   └── 08_avito_inference_pipeline.ipynb          ✅
+├── src/
+│   ├── __init__.py                                ⏳ next
+│   ├── feature_engineering.py                     ⏳ next
+│   └── api.py                                     ⏳ next
+│   └── app.py                                     ⏳ after API
 ├── data/
 │   ├── track2/
 │   ├── sample/ad_click_data.csv
@@ -83,19 +91,19 @@ ad-click-ctr-prediction/
 │   ├── platt_lgb.joblib
 │   └── ensemble_avito_model_comparison.json
 ├── docs/
-│   ├── 01_kdd_eda_readme.md
-│   ├── 02_kdd_modelling_readme.md
-│   ├── 03_advertising_modelling_readme.md
-│   ├── 04_avito_eda_readme.md
-│   ├── 05_avito_feature_engineering_readme.md
-│   ├── 06_avito_modelling_readme.md
-│   ├── 07_avito_ensemble_readme.md
-│   └── 08_avito_inference_readme.md
+│   ├── 01_kdd_eda_readme.md                       ✅
+│   ├── 02_kdd_modelling_readme.md                 ✅
+│   ├── 03_advertising_modelling_readme.md         ✅
+│   ├── 04_avito_eda_readme.md                     ✅
+│   ├── 05_avito_feature_engineering_readme.md     ✅
+│   ├── 06_avito_modelling_readme.md               ✅
+│   ├── 07_avito_ensemble_readme.md                ✅
+│   └── 08_avito_inference_readme.md               ✅
 ├── requirements.txt
+├── requirements_api.txt                           ⏳ next
 ├── .gitignore
-├── README.md
+├── README.md                                      ✅
 └── HANDOFF.md
-```
 
 ---
 
@@ -162,8 +170,8 @@ ad-click-ctr-prediction/
 - Replaced with: category_match
 - Smoothing: α=0.05, β=75 (same as KDD Cup)
 
-Feature list (exact order — must match in NB06/07/08):
-```
+Feature list (exact order — must match across all src/ files):
+````
 FEATURE_COLS = [
     'HistCTR',
     'Position', 'position_in_session', 'ads_before', 'session_size',
@@ -173,7 +181,7 @@ FEATURE_COLS = [
     'price_log', 'has_price', 'title_word_count',
     'category_level', 'category_match', 'IsUserLoggedOn'
 ]
-```
+````
 
 **NB06 — Avito Modelling**
 - Train: 1,938,386 rows | Test: 484,597 rows (time-based 80/20)
@@ -205,7 +213,7 @@ FEATURE_COLS = [
 - Note: XGBoost Platt calibration is impure (cal fold was inside NB06 training data)
   LightGBM calibration is fully clean
 
-**NB08 — Inference Pipeline**
+**NB08 — Inference Pipeline (notebook)**
 - Single record ensemble: 0.7565% (+23% above 0.6142% baseline)
 - XGB raw: 0.521395 (~87× inflated) → calibrated: 0.006775
 - LGB raw: 0.517250 → calibrated: 0.008355
@@ -214,6 +222,59 @@ FEATURE_COLS = [
 - HistCTR sensitivity: 1.33× range, non-monotone across 20× HistCTR span
 - Batch calibration ratio: 1.015× (mean predicted 0.6089% vs actual 0.6000%)
 - Predictions saved: data/avito/sample/predictions.csv
+
+---
+
+## Phase 3 — IN PROGRESS 🔄
+
+### What's been done
+- src/__init__.py ✅
+- src/feature_engineering.py ✅ — FEATURE_COLS, GLOBAL_CTR, ALPHA, BETA,
+  smoothed_ctr(), engineer_features(record: dict) -> pd.DataFrame
+- src/api.py ✅ — FastAPI service, tested and working
+  Endpoints: GET /health, POST /predict, POST /batch_predict
+  Models loaded at startup: xgb_avito_best_model, platt_xgb, 
+  lgb_avito_model, platt_lgb
+  Pydantic AdRequest schema with 21 features and sensible defaults
+- requirements_api.txt ✅
+
+### What's left
+- src/app.py — Streamlit demo (next)
+- notebooks/09_api_and_demo_walkthrough.ipynb — usage notebook (after app.py)
+- Update README.md — add "Running the API" and "Running the Demo" sections
+- Resume bullets — final step
+
+### Run commands
+```bash
+# Install API dependencies
+pip install -r requirements_api.txt
+
+# Run API (from repo root)
+uvicorn src.api:app --reload --host 0.0.0.0 --port 8000
+
+# Health check
+curl http://localhost:8000/health
+
+# Single prediction
+curl -X POST http://localhost:8000/predict \
+  -H "Content-Type: application/json" \
+  -d '{
+    "HistCTR": 0.008, "Position": 1, "IsUserLoggedOn": 1,
+    "Price": 4500, "Title": "Laptop Lenovo ThinkPad",
+    "category_level": 2, "category_match": 1,
+    "session_size": 2, "user_impression_count": 12,
+    "user_click_count": 2, "uid_category_count": 3,
+    "ad_ctr": 0.009, "category_ctr": 0.007,
+    "location_ctr": 0.006, "position_ctr": 0.006,
+    "device_ctr": 0.006, "SearchDate": "2015-06-01 14:00:00"
+  }'
+
+# Interactive API docs
+open http://localhost:8000/docs
+
+# Run Streamlit app (after src/app.py is created)
+streamlit run src/app.py
+```
 
 ---
 
@@ -232,53 +293,7 @@ FEATURE_COLS = [
 
 ---
 
-## Documentation Status
-- docs/01_kdd_eda_readme.md ✅
-- docs/02_kdd_modelling_readme.md ✅
-- docs/03_advertising_modelling_readme.md ✅
-- docs/04_avito_eda_readme.md ✅
-- docs/05_avito_feature_engineering_readme.md ✅
-- docs/06_avito_modelling_readme.md ✅
-- docs/07_avito_ensemble_readme.md ✅
-- docs/08_avito_inference_readme.md ✅
-- README.md — needs Phase 2 update (next step)
-
----
-
-## What To Do Next
-
-### Step 1: Update main README.md
-Add Phase 2 to the "The Journey" section.
-Add 3 key Phase 2 findings to Key Findings.
-Keep it high-level — details live in docs/.
-
-Key findings to add:
-1. HistCTR alone (AUC=0.6640) captured 97% of the signal achievable 
-   with 12 carefully engineered features (AUC=0.758) — one pre-computed 
-   feature does most of the work
-2. XGBoost won on ranking (AUC 0.664→0.758) but failed on calibration 
-   (log-loss 12× worse than baseline) due to scale_pos_weight distortion;
-   Platt scaling fixed it (13.7× log-loss reduction)
-3. Ensemble of calibrated XGBoost + LightGBM beat both individual models 
-   on both metrics: log-loss=0.034040, AUC=0.7613
-
-### Step 2: Push everything to GitHub
-```bash
-cd /mnt/home-ldap/ayush_ldap/projects/laboratory/ad-click-ctr-prediction
-git add docs/04_avito_eda_readme.md \
-        docs/05_avito_feature_engineering_readme.md \
-        docs/06_avito_modelling_readme.md \
-        docs/07_avito_ensemble_readme.md \
-        docs/08_avito_inference_readme.md \
-        README.md \
-        HANDOFF.md
-git commit -m "Add Phase 2 docs, READMEs NB04-08, update main README"
-git push origin main
-```
-
----
-
-## Execution Command Template
+## Execution Command Template (notebooks)
 ```bash
 cd /mnt/home-ldap/ayush_ldap/projects/laboratory/ad-click-ctr-prediction && \
 source venv-adclick/bin/activate && \
@@ -287,3 +302,4 @@ jupyter nbconvert --to notebook --execute --inplace \
   --ExecutePreprocessor.timeout=1800 \
   notebooks/[notebook].ipynb
 ```
+````
