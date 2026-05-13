@@ -16,7 +16,8 @@ ad-click-ctr-prediction/
 │   ├── 05_avito_feature_engineering.ipynb              # 21 features across 5 families, 2.4M rows
 │   ├── 06_avito_modelling.ipynb                        # XGBoost grid search + calibration failure discovery
 │   ├── 07_avito_ensemble.ipynb                         # Platt scaling + LightGBM + ensemble
-│   └── 08_avito_inference_pipeline.ipynb               # End-to-end single-record and batch scoring
+│   ├── 08_avito_inference_pipeline.ipynb               # End-to-end single-record and batch scoring
+│   └── 09_api_and_demo_walkthrough.ipynb               # API usage, design decisions, limitations
 ├── data/
 │   ├── track2/                                         # KDD Cup raw files (not in repo — too large)
 │   ├── sample/
@@ -42,8 +43,13 @@ ad-click-ctr-prediction/
 │   ├── lgb_avito_model.joblib                          # Avito LightGBM model
 │   ├── platt_lgb.joblib                                # Platt scaler for LightGBM
 │   └── ensemble_avito_model_comparison.json            # Raw vs calibrated vs ensemble metrics
-├── docs/                                               # Per-notebook write-ups (NB01–08)
+├── src/
+│   ├── feature_engineering.py                          # shared feature logic (API + app)
+│   ├── api.py                                          # FastAPI service — /predict, /batch_predict, /health
+│   └── app.py                                          # Streamlit interactive demo
+├── docs/                                               # Per-notebook write-ups (NB01–09)
 ├── requirements.txt
+├── requirements_api.txt
 └── .gitignore
 ```
 
