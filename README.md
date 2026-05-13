@@ -112,6 +112,67 @@ Run the notebooks in order: 01 → 02 → 03 → 04 → 05 → 06 → 07 → 08.
 
 ---
 
+## Running the API
+
+The FastAPI service loads the trained ensemble and exposes three endpoints.
+
+```bash
+# Install API dependencies
+pip install -r requirements_api.txt
+
+# Start the server (from repo root, venv active)
+uvicorn src.api:app --reload --host 0.0.0.0 --port 8000
+```
+
+| Endpoint | Method | What it does |
+|---|---|---|
+| `/health` | GET | Confirms models loaded, returns ensemble AUC and log-loss |
+| `/predict` | POST | Scores a single ad impression → calibrated P(click) |
+| `/batch_predict` | POST | Scores up to 10,000 records → predictions list |
+
+Interactive docs (Swagger UI) at `http://localhost:8000/docs` — every endpoint testable with a form, no curl needed.
+
+Sample request:
+```bash
+curl -X POST http://localhost:8000/predict \
+  -H "Content-Type: application/json" \
+  -d '{
+    "HistCTR": 0.008,
+    "Position": 1,
+    "IsUserLoggedOn": 1,
+    "Price": 4500,
+    "Title": "Продам ноутбук Lenovo ThinkPad",
+    "category_level": 2,
+    "category_match": 1,
+    "session_size": 2,
+    "ad_ctr": 0.009,
+    "category_ctr": 0.007,
+    "location_ctr": 0.006,
+    "SearchDate": "2015-06-01 14:00:00"
+  }'
+```
+
+---
+
+## Running the Demo
+
+The Streamlit app scores ads interactively using the same ensemble. Adjust any input and all three panels update live — no page reload.
+
+```bash
+# From repo root, venv active
+streamlit run src/app.py --server.port 8003
+# Open http://localhost:8003
+```
+
+Three panels:
+- **Prediction** — calibrated ensemble CTR vs 0.6142% baseline, with XGBoost and LightGBM breakdown
+- **Position Sensitivity** — sweep Position 1→7 and watch the inverted gradient documented in NB08 appear live
+- **HistCTR Sensitivity** — sweep HistCTR across 5 values and observe the non-monotone response documented in NB08
+
+The app calls `engineer_features()` and the 4 saved models directly — no dependency on the API being running.
+
+---
+
 ## Acknowledgements
 
 Some ideas around feature engineering — particularly the smoothed historical CTR approach and the `p*` feature naming convention — were inspired by open-source Kaggle competition work on large-scale CTR prediction problems. The smoothing formulation draws on techniques that became standard practice in the field following competitions like KDD Cup 2012 and related industry work on ad click modelling.
